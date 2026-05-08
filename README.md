@@ -1,165 +1,187 @@
 # Maria Luiza 💖
 
 Aplicativo PWA de acompanhamento diário da bebê Maria Luiza.  
-Backend Flask + Supabase PostgreSQL. Mobile-first. Instalável no celular.
+Backend Flask + Supabase PostgreSQL · Mobile First · Instalável no celular.
 
 ---
 
 ## Funcionalidades
 
-- 🍼 **Mamadas** — registro com horário, ML e timer de arroto (15min)
-- 💊 **Remédios** — doses com cálculo automático do próximo horário
-- 🏥 **Consultas** — agendamento por especialidade
-- 🔬 **Exames** — agendamento com local e observações
-- 💉 **Vacinas** — SUS/Particular, marcar como aplicada
-- 📏 **Crescimento** — gráfico de peso e altura
-- 🛒 **Compras** — lista de itens com checklist
-- 📌 **Lembretes** — notas rápidas
-- 📅 **Próximos eventos** — feed unificado ordenado
-- 📸 **Foto** — foto personalizada da Maria Luiza no header
+- 🍼 Mamadas — horário, ML e timer de arroto (15min)
+- 💊 Remédios — doses com próximo horário automático
+- 🏥 Consultas — por especialidade com alertas
+- 🔬 Exames — local e observações
+- 💉 Vacinas — SUS/Particular, marcar como aplicada
+- 📏 Crescimento — gráfico de peso e altura
+- 🛒 Compras — checklist de itens
+- 📌 Lembretes — notas rápidas
+- 📅 Próximos eventos — feed unificado
+- 📸 Foto — avatar personalizado da Maria Luiza
 
 ---
 
-## Instalação local
-
-### 1. Pré-requisitos
-
-- Python 3.9+
-- pip
-
-### 2. Clone o repositório
+## Instalar e rodar localmente
 
 ```bash
+# 1. Clone
 git clone https://github.com/seu-usuario/projeto-maria-luiza.git
 cd projeto-maria-luiza
-```
 
-### 3. Crie o ambiente virtual
-
-```bash
+# 2. Crie e ative o ambiente virtual
 python -m venv venv
-# Windows
-venv\Scripts\activate
-# Mac/Linux
-source venv/bin/activate
-```
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # Mac/Linux
 
-### 4. Instale as dependências
-
-```bash
+# 3. Instale dependências
 pip install -r requirements.txt
-```
 
-### 5. Configure as variáveis de ambiente
+# 4. Configure variáveis de ambiente
+copy .env.example .env         # Windows
+# cp .env.example .env         # Mac/Linux
+# Edite o .env com seus dados
 
-```bash
-cp .env.example .env
-# Edite o .env com seus dados reais
-```
+# 5. Execute as tabelas no Supabase (uma única vez)
+#    Abra supabase_setup.sql no SQL Editor do Supabase e execute
 
-### 6. Configure o banco de dados Supabase
-
-Execute o arquivo `supabase_setup.sql` no **SQL Editor** do Supabase Dashboard.
-
-### 7. Rode localmente
-
-```bash
+# 6. Rode
 python main.py
+# Acesse http://localhost:5000
 ```
-
-Acesse: `http://localhost:5000`
 
 ---
 
 ## Configurar Supabase
 
-1. Acesse [supabase.com](https://supabase.com) e crie um projeto
-2. Vá em **SQL Editor** e execute o conteúdo de `supabase_setup.sql`
-3. Copie a **URL** e a **anon key** em **Settings > API**
-4. Cole no seu `.env`
+1. Crie uma conta em [supabase.com](https://supabase.com)
+2. Crie um novo projeto
+3. Vá em **SQL Editor** e cole/execute o conteúdo de `supabase_setup.sql`
+4. Vá em **Settings → API** e copie:
+   - `URL` → `SUPABASE_URL` no seu `.env`
+   - `anon public key` → `SUPABASE_KEY` no seu `.env`
 
 ---
 
-## Deploy no Render (recomendado)
+## Deploy no Render (passo a passo)
 
-1. Faça push do projeto para o GitHub
-2. Acesse [render.com](https://render.com) e crie uma conta
-3. Clique em **New > Web Service**
-4. Conecte seu repositório GitHub
-5. Configure:
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `gunicorn main:app`
-6. Em **Environment Variables**, adicione:
-   - `SUPABASE_URL`
-   - `SUPABASE_KEY`
-   - `SECRET_KEY`
-   - `ONESIGNAL_APP_ID`
-7. Clique em **Deploy**
-
-O app ficará disponível em `https://seu-app.onrender.com`
-
----
-
-## Deploy no Railway
-
-1. Faça push para o GitHub
-2. Acesse [railway.app](https://railway.app)
-3. Clique em **New Project > Deploy from GitHub repo**
-4. Selecione o repositório
-5. Adicione as variáveis de ambiente nas **Settings**
-6. O deploy é automático
-
----
-
-## Subir no GitHub
+### 1. Suba o projeto no GitHub
 
 ```bash
-# Inicializar (se necessário)
 git init
 git branch -M main
-
-# Adicionar arquivos
 git add .
-git commit -m "feat: app Maria Luiza PWA completo"
-
-# Conectar ao GitHub
-git remote add origin https://github.com/seu-usuario/seu-repo.git
+git commit -m "deploy: app Maria Luiza"
+git remote add origin https://github.com/SEU_USUARIO/SEU_REPO.git
 git push -u origin main
 ```
+
+### 2. Crie o serviço no Render
+
+1. Acesse [render.com](https://render.com) e faça login
+2. Clique em **New → Web Service**
+3. Selecione **Connect a repository** → escolha seu repositório
+4. Configure:
+   - **Name:** `maria-luiza`
+   - **Region:** `São Paulo` (se disponível) ou `Oregon`
+   - **Branch:** `main`
+   - **Runtime:** `Python`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 main:app`
+
+> ⚠️ **IMPORTANTE:** O Start Command é crítico. Use EXATAMENTE este comando.
+
+### 3. Configure as variáveis de ambiente
+
+Na tela do serviço, vá em **Environment** e adicione:
+
+| Variável | Valor |
+|---|---|
+| `SUPABASE_URL` | `https://seu-projeto.supabase.co` |
+| `SUPABASE_KEY` | `sua_anon_key` |
+| `SECRET_KEY` | qualquer string aleatória longa |
+| `ONESIGNAL_APP_ID` | `adc50cce-7803-4997-b030-16e794a792bb` |
+
+### 4. Deploy
+
+Clique em **Create Web Service**. O Render vai:
+1. Clonar o repositório
+2. Instalar dependências
+3. Iniciar o Gunicorn na porta `$PORT` (que o Render define automaticamente)
+4. O app fica disponível em `https://maria-luiza.onrender.com`
 
 ---
 
 ## Instalar no celular (PWA)
 
 ### Android (Chrome)
-1. Abra o app no Chrome
-2. Toque no menu (⋮) > **Adicionar à tela inicial**
-3. Confirme a instalação
+1. Abra o app no Chrome no celular
+2. Toque no menu ⋮ → **"Adicionar à tela inicial"**
+3. Confirme → o app aparece como ícone nativo
 
 ### iPhone (Safari)
-1. Abra o app no Safari
-2. Toque em **Compartilhar** (ícone de seta)
-3. Toque em **Adicionar à Tela de Início**
+1. Abra no Safari (funciona APENAS no Safari)
+2. Toque no botão de compartilhar 📤
+3. Role e toque em **"Adicionar à Tela de Início"**
 4. Confirme
 
 ---
 
-## Tecnologias
+## Estrutura do projeto
 
-- **Backend:** Flask (Python)
-- **Banco de dados:** Supabase (PostgreSQL)
-- **Frontend:** HTML5 + CSS3 + JavaScript puro
-- **PWA:** Service Worker + Web App Manifest
-- **Notificações:** OneSignal
-- **Gráficos:** Chart.js
-- **Deploy:** Gunicorn / Render / Railway
+```
+projeto_maria_luiza/
+├── main.py              ← Backend Flask (todas as rotas API)
+├── Procfile             ← Comando de start para Render
+├── requirements.txt     ← Dependências Python
+├── supabase_setup.sql   ← Script SQL para criar as tabelas
+├── .env.example         ← Template de variáveis de ambiente
+├── .gitignore
+├── templates/
+│   └── index.html       ← App completo (SPA)
+└── static/
+    ├── style.css        ← CSS mobile-first
+    ├── script.js        ← JavaScript (timezone, foto, UI)
+    ├── sw.js            ← Service Worker (PWA + notificações)
+    ├── manifest.json    ← PWA manifest
+    └── OneSignalSDKWorker.js
+```
 
 ---
 
-## Timezone
+## Tabelas do Supabase
 
-O app usa `America/Sao_Paulo` (UTC-3).  
-Todos os horários são salvos com offset correto e exibidos sem conversão errada.
+| Tabela | Uso |
+|---|---|
+| `mamadas` | Registros de mamadas (horario, ml) |
+| `remedios` | Medicamentos com próximo horário |
+| `consultas` | Consultas médicas agendadas |
+| `exames` | Exames agendados |
+| `vacinas` | Vacinas SUS/Particular |
+| `crescimento` | Peso e altura ao longo do tempo |
+| `compras` | Lista de compras com checklist |
+| `lembretes` | Notas rápidas |
+| `notificacoes` | Histórico de notificações |
+
+---
+
+## Solução de problemas
+
+### Deploy falha no Render: "No open ports detected"
+
+**Causa:** Gunicorn não está ligado à porta correta.  
+**Solução:** Verifique se o Start Command é exatamente:
+```
+gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 main:app
+```
+
+### Horário errado (ex: cadastrei 22:00, aparece 19:00)
+
+**Causa:** Bug de timezone (UTC vs Brasil).  
+**Status:** Corrigido. O app usa `America/Sao_Paulo` para salvar e exibir.
+
+### PWA não aparece no iPhone
+
+**Causa:** Precisa ser acessado pelo **Safari** (não Chrome no iOS).  
+Abra no Safari → Compartilhar → Adicionar à Tela de Início.
 
 ---
 

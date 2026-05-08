@@ -8,8 +8,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Maria Luiza">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Acompanhamento diário da bebê Maria Luiza">
 <link rel="manifest" href="/manifest.json">
+<!-- Ícone para iPhone (Apple Touch Icon) -->
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4140/4140048.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="/static/style.css">
@@ -35,7 +40,8 @@
           <img id="avatar-img" alt="Maria Luiza">
         </div>
       </div>
-      <input type="file" id="photo-input" accept="image/*" capture="user" onchange="handlePhotoUpload(event)">
+      <!-- Sem capture="user" → permite galeria E câmera no celular -->
+<input type="file" id="photo-input" accept="image/*" onchange="handlePhotoUpload(event)">
       <div class="header-info">
         <h1>Maria Luiza</h1>
         <p>Rotina da nossa princesinha 💖</p>
@@ -458,12 +464,16 @@
   </div>
 </div>
 
-<!-- OneSignal -->
+<!-- OneSignal — configura SW unificado -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
-  await OneSignal.init({ appId: "{{ onesignal_app_id }}" });
+  await OneSignal.init({
+    appId: "{{ onesignal_app_id }}",
+    serviceWorkerPath: "/sw.js",
+    serviceWorkerParam: { scope: "/" }
+  });
 });
 </script>
 <script src="/static/script.js"></script>
