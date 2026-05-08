@@ -1,161 +1,471 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Maria Luiza 💖</title>
-
-<link rel="stylesheet" href="/static/style.css">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
-
-<!-- PWA -->
-<link rel="manifest" href="/static/manifest.json">
 <meta name="theme-color" content="#ff4da6">
-
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Maria Luiza">
+<link rel="manifest" href="/manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/style.css">
 </head>
-
 <body>
 
+<!-- FUNDO GRADIENTE -->
+<div class="app-bg"></div>
+
+<!-- TOASTS -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- APP -->
 <div class="app">
 
-    <!-- HEADER -->
-    <div class="header">
-        <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png">
+  <!-- HEADER -->
+  <div class="app-header">
+    <div class="left">
+      <!-- Foto clicável da Maria Luiza -->
+      <div class="avatar-wrap" onclick="triggerPhotoInput()" title="Trocar foto">
+        <div class="avatar-bg">
+          <span id="avatar-emoji">👶</span>
+          <img id="avatar-img" alt="Maria Luiza">
+        </div>
+      </div>
+      <input type="file" id="photo-input" accept="image/*" capture="user" onchange="handlePhotoUpload(event)">
+      <div class="header-info">
+        <h1>Maria Luiza</h1>
+        <p>Rotina da nossa princesinha 💖</p>
+      </div>
+    </div>
+    <div class="header-date" id="header-date"></div>
+  </div>
+
+  <!-- STATS STRIP -->
+  <div class="stats-strip">
+    <div class="stat-card" onclick="navigate('mamadas')">
+      <div class="stat-icon">🍼</div>
+      <div class="stat-num" id="stat-mamadas">–</div>
+      <div class="stat-label">Mamadas hoje</div>
+    </div>
+    <div class="stat-card" onclick="navigate('remedios')">
+      <div class="stat-icon">💊</div>
+      <div class="stat-num" id="stat-remedios">–</div>
+      <div class="stat-label">Remédios</div>
+    </div>
+    <div class="stat-card" onclick="navigate('consultas')">
+      <div class="stat-icon">🏥</div>
+      <div class="stat-num" id="stat-consultas">–</div>
+      <div class="stat-label">Consultas</div>
+    </div>
+  </div>
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <div id="screen-dashboard" class="screen active">
+
+    <!-- Última mamada -->
+    <div class="dash-mamada" id="dash-ultima-mamada">
+      <div class="row">
         <div>
-            <h2>Maria Luiza 💖</h2>
-            <p>Rotina da nossa princesa</p>
+          <h3>Última mamada</h3>
+          <div class="big">--</div>
+          <div class="sub">Carregando...</div>
         </div>
+        <div class="emoji">🍼</div>
+      </div>
     </div>
 
-    <!-- CARDS -->
-    <div class="cards">
-        <div class="card pink">
-            <h3>💊</h3>
-            <span>{{ dados.medicamentos|length }}</span>
-            <p>Remédios</p>
+    <!-- Mini cards -->
+    <div class="dash-grid">
+      <div class="dash-mini" onclick="navigate('remedios')">
+        <div class="dm-top">
+          <div class="dm-icon" style="background:#fff0f8">💊</div>
         </div>
-
-        <div class="card purple">
-            <h3>🏥</h3>
-            <span>{{ dados.consultas|length }}</span>
-            <p>Consultas</p>
+        <div class="dm-label">Próximos remédios</div>
+        <div id="dash-remedios" class="mt-8"><div class="loader-dot"></div></div>
+      </div>
+      <div class="dash-mini" onclick="navigate('consultas')">
+        <div class="dm-top">
+          <div class="dm-icon" style="background:#e8f2ff">🏥</div>
         </div>
-
-        <div class="card green">
-            <h3>🍼</h3>
-            <span>{{ dados.mamadas|length }}</span>
-            <p>Mamadas</p>
-        </div>
+        <div class="dm-label">Consultas</div>
+        <div id="dash-consultas" class="mt-8"><div class="loader-dot"></div></div>
+      </div>
     </div>
 
-    <!-- EVENTOS -->
-    <div class="events">
-        <h3>📅 Próximos eventos</h3>
-
-        {% for r in dados.medicamentos %}
-        <div class="event pink">
-            💊 {{ r.nome }}
-            <span>Próximo: {{ r.proximo }}</span>
-
-            <div class="acoes">
-                <a href="/tomar_remedio/{{ loop.index0 }}" class="ok" onclick="return confirm('Confirmar que deu o remédio?')">✔</a>
-                <a href="/delete/medicamentos/{{ loop.index0 }}" class="delete">🗑️</a>
-            </div>
+    <div class="dash-grid">
+      <div class="dash-mini" onclick="navigate('vacinas')">
+        <div class="dm-top">
+          <div class="dm-icon" style="background:#e2faf0">💉</div>
         </div>
-        {% endfor %}
-
-        {% for c in dados.consultas %}
-        <div class="event purple">
-            🏥 {{ c.tipo }}
-            <span>{{ c.data }} {{ c.hora }}</span>
-
-            <a href="/delete/consultas/{{ loop.index0 }}" class="delete">🗑️</a>
+        <div class="dm-label">Vacinas pendentes</div>
+        <div id="dash-vacinas" class="mt-8"><div class="loader-dot"></div></div>
+      </div>
+      <div class="dash-mini" onclick="navigate('lembretes')">
+        <div class="dm-top">
+          <div class="dm-icon" style="background:#fffbe8">📌</div>
         </div>
-        {% endfor %}
-
-        {% for m in dados.mamadas %}
-        <div class="event green">
-            🍼 Mamada
-            <span>{{ m.horario }}</span>
-
-            <a href="/delete/mamadas/{{ loop.index0 }}" class="delete">🗑️</a>
-        </div>
-        {% endfor %}
+        <div class="dm-label">Lembretes</div>
+        <div id="dash-lembretes" class="mt-8"><div class="loader-dot"></div></div>
+      </div>
     </div>
 
-    <!-- FORM -->
-    <div class="form-section">
-
-        <h3>➕ Adicionar</h3>
-
-        <!-- MAMADA -->
-        <form action="/add_mamada" method="POST">
-            <input type="datetime-local" name="horario" required>
-            <button>Salvar 🍼</button>
-        </form>
-
-        <!-- CONSULTA -->
-        <form action="/add_consulta" method="POST">
-            <input type="text" name="tipo" placeholder="Consulta" required>
-            <input type="date" name="data" required>
-            <input type="time" name="hora" required>
-            <input type="text" name="local" placeholder="Local">
-            <button>Salvar 🏥</button>
-        </form>
-
-        <!-- REMÉDIO -->
-        <form action="/add_remedio" method="POST">
-            <input name="nome" placeholder="Nome do remédio" required>
-
-            <label>Horário que deu:</label>
-            <input type="datetime-local" name="inicio" required>
-
-            <label>Intervalo (horas):</label>
-            <input type="number" name="intervalo" required>
-
-            <button>Salvar 💊</button>
-        </form>
-
+    <!-- Atalhos rápidos -->
+    <p class="section-title mt-16"><span class="icon">⚡</span> Ações rápidas</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <button class="btn btn-primary" onclick="openModal('modal-mamada')" style="font-size:.85rem;padding:13px">🍼 Mamada</button>
+      <button class="btn btn-primary" onclick="navigate('proximos')" style="font-size:.85rem;padding:13px;background:linear-gradient(135deg,#c06eff,#9333ea)">📅 Próximos</button>
     </div>
 
+  </div>
+
+  <!-- ==================== MAMADAS ==================== -->
+  <div id="screen-mamadas" class="screen">
+    <p class="section-title"><span class="icon">🍼</span> Mamadas</p>
+
+    <!-- Timer Arroto -->
+    <div class="timer-wrap" id="timer-wrap">
+      <div class="timer-label">⏱ Hora de arrotar!</div>
+      <div class="timer-display" id="timer-display">15:00</div>
+      <div class="timer-bar"><div class="timer-bar-fill" id="timer-fill" style="width:100%"></div></div>
+      <button class="btn btn-sm" onclick="stopTimer()" style="background:rgba(255,255,255,.25);color:white;margin-top:12px">Parar timer</button>
+    </div>
+
+    <div id="mamadas-list"></div>
+  </div>
+
+  <!-- ==================== REMÉDIOS ==================== -->
+  <div id="screen-remedios" class="screen">
+    <p class="section-title"><span class="icon">💊</span> Remédios</p>
+    <div id="remedios-list"></div>
+  </div>
+
+  <!-- ==================== CONSULTAS ==================== -->
+  <div id="screen-consultas" class="screen">
+    <p class="section-title"><span class="icon">🏥</span> Consultas</p>
+    <div id="consultas-list"></div>
+  </div>
+
+  <!-- ==================== MAIS (hub) ==================== -->
+  <div id="screen-mais" class="screen">
+    <p class="section-title"><span class="icon">✨</span> Mais opções</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="card" onclick="navigate('exames')" style="cursor:pointer;text-align:center;padding:20px 12px">
+        <div style="font-size:2rem">🔬</div>
+        <div class="fw-600 mt-8">Exames</div>
+      </div>
+      <div class="card" onclick="navigate('vacinas')" style="cursor:pointer;text-align:center;padding:20px 12px">
+        <div style="font-size:2rem">💉</div>
+        <div class="fw-600 mt-8">Vacinas</div>
+      </div>
+      <div class="card" onclick="navigate('crescimento')" style="cursor:pointer;text-align:center;padding:20px 12px">
+        <div style="font-size:2rem">📏</div>
+        <div class="fw-600 mt-8">Crescimento</div>
+      </div>
+      <div class="card" onclick="navigate('compras')" style="cursor:pointer;text-align:center;padding:20px 12px">
+        <div style="font-size:2rem">🛒</div>
+        <div class="fw-600 mt-8">Compras</div>
+      </div>
+      <div class="card" onclick="navigate('lembretes')" style="cursor:pointer;text-align:center;padding:20px 12px">
+        <div style="font-size:2rem">📌</div>
+        <div class="fw-600 mt-8">Lembretes</div>
+      </div>
+      <div class="card" onclick="navigate('proximos')" style="cursor:pointer;text-align:center;padding:20px 12px">
+        <div style="font-size:2rem">📅</div>
+        <div class="fw-600 mt-8">Próximos</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== EXAMES ==================== -->
+  <div id="screen-exames" class="screen">
+    <div class="flex-between mb-16">
+      <p class="section-title" style="margin:0"><span class="icon">🔬</span> Exames</p>
+      <button class="btn btn-sm btn-ghost" onclick="navigate('mais')">← Voltar</button>
+    </div>
+    <div id="exames-list"></div>
+  </div>
+
+  <!-- ==================== VACINAS ==================== -->
+  <div id="screen-vacinas" class="screen">
+    <div class="flex-between mb-16">
+      <p class="section-title" style="margin:0"><span class="icon">💉</span> Vacinas</p>
+      <button class="btn btn-sm btn-ghost" onclick="navigate('mais')">← Voltar</button>
+    </div>
+    <p class="section-title fs-sm" style="margin-bottom:8px"><span class="icon">⏳</span> Pendentes</p>
+    <div id="vacinas-pendentes"></div>
+    <p class="section-title fs-sm mt-16" style="margin-bottom:8px"><span class="icon">✅</span> Aplicadas</p>
+    <div id="vacinas-aplicadas"></div>
+  </div>
+
+  <!-- ==================== CRESCIMENTO ==================== -->
+  <div id="screen-crescimento" class="screen">
+    <div class="flex-between mb-16">
+      <p class="section-title" style="margin:0"><span class="icon">📏</span> Crescimento</p>
+      <button class="btn btn-sm btn-ghost" onclick="navigate('mais')">← Voltar</button>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-tabs">
+        <button class="chart-tab active" data-mode="peso" onclick="switchChartMode('peso')">⚖️ Peso</button>
+        <button class="chart-tab" data-mode="altura" onclick="switchChartMode('altura')">📏 Altura</button>
+      </div>
+      <canvas id="chart-crescimento" height="180"></canvas>
+    </div>
+    <p class="section-title fs-sm mb-8"><span class="icon">📋</span> Histórico</p>
+    <div id="crescimento-list"></div>
+  </div>
+
+  <!-- ==================== COMPRAS ==================== -->
+  <div id="screen-compras" class="screen">
+    <div class="flex-between mb-16">
+      <p class="section-title" style="margin:0"><span class="icon">🛒</span> Lista de compras</p>
+      <button class="btn btn-sm btn-ghost" onclick="navigate('mais')">← Voltar</button>
+    </div>
+    <div id="compras-list"></div>
+  </div>
+
+  <!-- ==================== LEMBRETES ==================== -->
+  <div id="screen-lembretes" class="screen">
+    <div class="flex-between mb-16">
+      <p class="section-title" style="margin:0"><span class="icon">📌</span> Lembretes</p>
+      <button class="btn btn-sm btn-ghost" onclick="navigate('mais')">← Voltar</button>
+    </div>
+    <div id="lembretes-list"></div>
+  </div>
+
+  <!-- ==================== PRÓXIMOS ==================== -->
+  <div id="screen-proximos" class="screen">
+    <div class="flex-between mb-16">
+      <p class="section-title" style="margin:0"><span class="icon">📅</span> Próximos eventos</p>
+      <button class="btn btn-sm btn-ghost" onclick="navigate('dashboard')">← Voltar</button>
+    </div>
+    <div id="proximos-list"></div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- FAB -->
+<button class="fab" id="fab" onclick="openFab()" style="display:none">＋</button>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" data-screen="dashboard" onclick="navigate('dashboard')">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">Início</span>
+    <div class="nav-dot"></div>
+  </button>
+  <button class="nav-item" data-screen="mamadas" onclick="navigate('mamadas')">
+    <span class="nav-icon">🍼</span>
+    <span class="nav-label">Mamadas</span>
+    <div class="nav-dot"></div>
+  </button>
+  <button class="nav-item" data-screen="remedios" onclick="navigate('remedios')">
+    <span class="nav-icon">💊</span>
+    <span class="nav-label">Remédios</span>
+    <div class="nav-dot"></div>
+  </button>
+  <button class="nav-item" data-screen="consultas" onclick="navigate('consultas')">
+    <span class="nav-icon">🏥</span>
+    <span class="nav-label">Consultas</span>
+    <div class="nav-dot"></div>
+  </button>
+  <button class="nav-item" data-screen="mais" onclick="navigate('mais')">
+    <span class="nav-icon">✨</span>
+    <span class="nav-label">Mais</span>
+    <div class="nav-dot"></div>
+  </button>
+</nav>
+
+<!-- ==================== MODAIS ==================== -->
+
+<!-- Modal Mamada -->
+<div class="modal-overlay" id="modal-mamada">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🍼 Registrar Mamada</div>
+    <div class="form-group">
+      <label class="form-label">Horário</label>
+      <input type="datetime-local" class="form-input" id="mam-horario">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Quantidade (ml) — opcional</label>
+      <input type="number" class="form-input" id="mam-ml" placeholder="Ex: 90" min="0" max="500">
+    </div>
+    <button class="btn btn-primary mt-8" onclick="saveMamada()">💾 Salvar e iniciar timer</button>
+  </div>
+</div>
+
+<!-- Modal Remédio -->
+<div class="modal-overlay" id="modal-remedio">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💊 Adicionar Remédio</div>
+    <div class="form-group">
+      <label class="form-label">Nome do remédio</label>
+      <input type="text" class="form-input" id="rem-nome" placeholder="Ex: Vitamina D">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Primeiro horário</label>
+        <input type="datetime-local" class="form-input" id="rem-inicio">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Intervalo (horas)</label>
+        <input type="number" class="form-input" id="rem-intervalo" placeholder="Ex: 8" min="1" max="72">
+      </div>
+    </div>
+    <button class="btn btn-primary mt-8" onclick="saveRemedio()">💾 Salvar</button>
+  </div>
+</div>
+
+<!-- Modal Consulta -->
+<div class="modal-overlay" id="modal-consulta">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🏥 Agendar Consulta</div>
+    <div class="form-group">
+      <label class="form-label">Nome / descrição</label>
+      <input type="text" class="form-input" id="con-nome" placeholder="Ex: Retorno pediatra">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data e horário</label>
+      <input type="datetime-local" class="form-input" id="con-horario">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Local</label>
+        <input type="text" class="form-input" id="con-local" placeholder="Clínica, hospital...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Especialidade</label>
+        <select class="form-select" id="con-modalidade">
+          <option>Pediatra</option>
+          <option>Fisioterapeuta</option>
+          <option>Gastro</option>
+          <option>Neurologista</option>
+          <option>Cardiologista</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-8" onclick="saveConsulta()">💾 Salvar</button>
+  </div>
+</div>
+
+<!-- Modal Exame -->
+<div class="modal-overlay" id="modal-exame">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔬 Agendar Exame</div>
+    <div class="form-group">
+      <label class="form-label">Nome do exame</label>
+      <input type="text" class="form-input" id="exa-nome" placeholder="Ex: Ultrassom abdominal">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data e horário</label>
+      <input type="datetime-local" class="form-input" id="exa-horario">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Local</label>
+      <input type="text" class="form-input" id="exa-local" placeholder="Clínica, laboratório...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Observação</label>
+      <input type="text" class="form-input" id="exa-obs" placeholder="Jejum, preparo...">
+    </div>
+    <button class="btn btn-primary mt-8" onclick="saveExame()">💾 Salvar</button>
+  </div>
+</div>
+
+<!-- Modal Vacina -->
+<div class="modal-overlay" id="modal-vacina">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💉 Adicionar Vacina</div>
+    <div class="form-group">
+      <label class="form-label">Nome da vacina</label>
+      <input type="text" class="form-input" id="vac-nome" placeholder="Ex: Pentavalente">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Data prevista</label>
+        <input type="date" class="form-input" id="vac-data">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-select" id="vac-tipo">
+          <option value="SUS">SUS</option>
+          <option value="Particular">Particular</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary mt-8" onclick="saveVacina()">💾 Salvar</button>
+  </div>
+</div>
+
+<!-- Modal Crescimento -->
+<div class="modal-overlay" id="modal-crescimento">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📏 Registrar Medida</div>
+    <div class="form-group">
+      <label class="form-label">Data</label>
+      <input type="date" class="form-input" id="cres-data">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Peso (kg)</label>
+        <input type="number" class="form-input" id="cres-peso" placeholder="Ex: 4.5" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Altura (cm)</label>
+        <input type="number" class="form-input" id="cres-altura" placeholder="Ex: 52" step="0.1">
+      </div>
+    </div>
+    <button class="btn btn-primary mt-8" onclick="saveCrescimento()">💾 Salvar</button>
+  </div>
+</div>
+
+<!-- Modal Compra -->
+<div class="modal-overlay" id="modal-compra">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🛒 Adicionar Item</div>
+    <div class="form-group">
+      <label class="form-label">Item</label>
+      <input type="text" class="form-input" id="comp-nome" placeholder="Ex: Fralda Pampers G">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Quantidade / detalhe (opcional)</label>
+      <input type="text" class="form-input" id="comp-qtd" placeholder="Ex: 1 pacote, 2 unidades...">
+    </div>
+    <button class="btn btn-primary mt-8" onclick="saveCompra()">💾 Adicionar</button>
+  </div>
+</div>
+
+<!-- Modal Lembrete -->
+<div class="modal-overlay" id="modal-lembrete">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">📌 Novo Lembrete</div>
+    <div class="form-group">
+      <label class="form-label">Lembrete</label>
+      <textarea class="form-input" id="lem-texto" placeholder="Escreva seu lembrete aqui..." rows="4" style="resize:none"></textarea>
+    </div>
+    <button class="btn btn-primary mt-8" onclick="saveLembrete()">💾 Salvar</button>
+  </div>
 </div>
 
 <!-- OneSignal -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
+window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal) {
-  await OneSignal.init({
-    appId: "adc50cce-7803-4997-b030-16e794a792bb",
-  });
-
-  const permission = await OneSignal.Notifications.requestPermission();
-
-  console.log("Permissão:", permission);
+  await OneSignal.init({ appId: "{{ onesignal_app_id }}" });
 });
 </script>
-<button onclick="ativarNotificacao()" style="
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
-  padding: 15px;
-  background: #ff4da6;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  z-index: 9999;
-">
-🔔 Ativar notificações
-</button>
-
-<script>
-function ativarNotificacao() {
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(function(OneSignal) {
-    OneSignal.Notifications.requestPermission();
-  });
-}
-</script>
+<script src="/static/script.js"></script>
 </body>
 </html>
