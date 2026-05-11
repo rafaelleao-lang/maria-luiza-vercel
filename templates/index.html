@@ -159,6 +159,19 @@
   <!-- ==================== MAIS (hub) ==================== -->
   <div id="screen-mais" class="screen">
     <p class="section-title"><span class="icon">✨</span> Mais opções</p>
+
+    <!-- Card de instalação PWA (aparece quando Chrome oferece o prompt) -->
+    <div class="card install-card hidden" id="card-instalar">
+      <div class="install-row">
+        <img src="/static/icons/ml.svg" class="install-icon" alt="ML">
+        <div class="install-info">
+          <div class="fw-600">Instalar App</div>
+          <div class="fs-sm text-muted">Adicionar à tela inicial</div>
+        </div>
+        <button class="btn btn-sm btn-primary install-btn" onclick="instalarApp()">Instalar</button>
+      </div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="card" onclick="navigate('exames')" style="cursor:pointer;text-align:center;padding:20px 12px">
         <div style="font-size:2rem">🔬</div>

@@ -1,8 +1,10 @@
 {
+  "id": "maria-luiza-pwa-v2",
   "name": "Maria Luiza 💖",
   "short_name": "M. Luiza",
   "description": "Acompanhamento diário da bebê Maria Luiza",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#fdf0f8",
@@ -24,7 +26,7 @@
       "src": "/static/icons/ml.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ]
 }

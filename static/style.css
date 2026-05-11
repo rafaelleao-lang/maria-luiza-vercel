@@ -683,6 +683,40 @@ body {
 .card-name { max-width: 100%; }
 .card-actions { flex-shrink: 0; }
 
+/* ===== DASHBOARD — MINI EVENTO (consultas/remédios empilhado) ===== */
+.dash-ev-item { margin-bottom: 8px; }
+.dash-ev-item:last-child { margin-bottom: 0; }
+.dash-ev-nome {
+  font-size: .83rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.dash-ev-dt {
+  font-size: .7rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* ===== INSTALL CARD PWA ===== */
+.install-card { margin-bottom: 16px; }
+.install-card.hidden { display: none; }
+.install-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.install-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+.install-info { flex: 1; min-width: 0; }
+.install-btn { width: auto !important; padding: 8px 18px !important; }
+
 /* ===== FLOATING TIMER GLOBAL ===== */
 .floating-timer {
   position: fixed;

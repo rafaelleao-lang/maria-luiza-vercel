@@ -1,33 +1,39 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ff7ec0"/>
-      <stop offset="100%" stop-color="#d4009a"/>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff85c8"/>
+      <stop offset="100%" stop-color="#c2007e"/>
     </linearGradient>
+    <radialGradient id="shine" cx="38%" cy="30%" r="55%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.28)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
   </defs>
-  <!-- Fundo cheio (maskable safe zone) -->
-  <rect width="512" height="512" fill="url(#g)"/>
-  <!-- Círculo decorativo suave -->
-  <circle cx="256" cy="256" r="230" fill="rgba(255,255,255,0.07)"/>
-  <circle cx="256" cy="256" r="195" fill="rgba(255,255,255,0.06)"/>
-  <!-- Corações decorativos sutis -->
-  <text x="388" y="158" font-size="54" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-family="serif">♡</text>
-  <text x="110" y="390" font-size="38" text-anchor="middle" fill="rgba(255,255,255,0.22)" font-family="serif">♡</text>
-  <text x="430" y="380" font-size="28" text-anchor="middle" fill="rgba(255,255,255,0.20)" font-family="serif">♡</text>
-  <!-- Texto ML centralizado -->
+  <!-- Fundo cheio (maskable: conteúdo principal dentro da safe zone circular ~80%) -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- Brilho suave superior -->
+  <rect width="512" height="512" fill="url(#shine)"/>
+  <!-- Círculo decorativo interno leve -->
+  <circle cx="256" cy="256" r="215" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+  <!-- Coração decorativo superior direito -->
+  <text x="394" y="140" font-size="50" text-anchor="middle" fill="rgba(255,255,255,0.38)" font-family="Georgia,serif">♡</text>
+  <!-- Coração pequeno inferior esquerdo -->
+  <text x="110" y="416" font-size="30" text-anchor="middle" fill="rgba(255,255,255,0.20)" font-family="Georgia,serif">♡</text>
+  <!-- Texto ML — fonte serif elegante, branco -->
   <text
-    x="256" y="305"
-    font-family="Georgia, 'Times New Roman', serif"
-    font-size="195"
+    x="256"
+    y="310"
+    font-family="Georgia, 'Palatino Linotype', serif"
+    font-size="196"
     font-weight="bold"
     fill="white"
     text-anchor="middle"
-    dominant-baseline="middle"
-    letter-spacing="-6">ML</text>
-  <!-- Linha decorativa abaixo das letras -->
-  <rect x="152" y="332" width="208" height="4" rx="2" fill="rgba(255,255,255,0.40)"/>
-  <!-- Pontinhos decorativos -->
-  <circle cx="256" cy="368" r="5" fill="rgba(255,255,255,0.35)"/>
-  <circle cx="238" cy="368" r="3.5" fill="rgba(255,255,255,0.25)"/>
-  <circle cx="274" cy="368" r="3.5" fill="rgba(255,255,255,0.25)"/>
+    letter-spacing="-5"
+    opacity="0.97">ML</text>
+  <!-- Linha decorativa abaixo do texto -->
+  <rect x="162" y="340" width="188" height="3" rx="1.5" fill="rgba(255,255,255,0.48)"/>
+  <!-- Pontinhos rítmicos -->
+  <circle cx="246" cy="362" r="3.5" fill="rgba(255,255,255,0.32)"/>
+  <circle cx="262" cy="362" r="3.5" fill="rgba(255,255,255,0.32)"/>
+  <circle cx="278" cy="362" r="3.5" fill="rgba(255,255,255,0.32)"/>
 </svg>

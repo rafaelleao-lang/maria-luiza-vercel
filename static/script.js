@@ -280,12 +280,14 @@ async function loadDashboard() {
       }).join('')
     : `<div class="text-muted fs-sm">Nenhum cadastrado</div>`;
 
-  // Consultas
+  // Consultas — layout empilhado: nome em destaque, data+hora embaixo
   const conEl = document.getElementById('dash-consultas');
   conEl.innerHTML = d.consultas.length
-    ? d.consultas.slice(0,3).map(c =>
-        `<div class="flex-between mb-8"><span class="fw-600 fs-sm">${esc(c.nome)}</span><span class="text-muted fs-sm">${fmt(c.horario)}</span></div>`
-      ).join('')
+    ? d.consultas.slice(0,3).map(c => `
+      <div class="dash-ev-item">
+        <div class="dash-ev-nome">${esc(c.nome)}</div>
+        <div class="dash-ev-dt">🗓 ${fmt(c.horario)}</div>
+      </div>`).join('')
     : `<div class="text-muted fs-sm">Nenhuma agendada</div>`;
 
   // Vacinas
@@ -363,6 +365,28 @@ async function iniciarTimerArroto() {
   const endTs = Date.now() + TIMER_DURATION_MS;
   localStorage.setItem(TIMER_LS_KEY, String(endTs));
   State.timerEndTs = endTs;
+
+  // Envia ao SW para agendar notificação de background
+  _swMsg({ type: 'ML_TIMER_SCHEDULE', endTs });
+
+  // Notificação persistente visível fora do app (aparece na barra de notificações do Android)
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const endHora = new Intl.DateTimeFormat('pt-BR', {
+        timeZone: TZ, hour: '2-digit', minute: '2-digit'
+      }).format(new Date(endTs));
+      await reg.showNotification('⏱ Timer de arroto ativo', {
+        body: `Termina às ${endHora}. Você será avisada quando concluir.`,
+        icon: '/static/icons/ml.svg',
+        badge: '/static/icons/ml.svg',
+        tag: 'ml-timer-ativo',
+        silent: true,
+        requireInteraction: false,
+      });
+    } catch {}
+  }
+
   _mostrarTimers();
   _startTimerInterval();
 }
@@ -382,7 +406,9 @@ function _tickTimer() {
     State.timerEndTs = null;
     _esconderTimers();
     toast('Tempo de arrotar concluído! 🎉');
-    _notificarArroto();
+    // App está aberta: cancela a notificação do SW (evita duplicata) e vibra
+    _swMsg({ type: 'ML_TIMER_CANCEL' });
+    if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
     return;
   }
   _renderTimerDisplay(remaining);
@@ -424,6 +450,7 @@ function stopTimer() {
   localStorage.removeItem(TIMER_LS_KEY);
   State.timerEndTs = null;
   _esconderTimers();
+  _swMsg({ type: 'ML_TIMER_CANCEL' });
 }
 
 function restaurarTimer() {
@@ -440,22 +467,9 @@ function restaurarTimer() {
   _startTimerInterval();
 }
 
-async function _notificarArroto() {
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    reg.showNotification('Maria Luiza 💖', {
-      body: 'Hora de arrotar! Os 15 minutos terminaram. 🎉',
-      icon: '/static/icons/ml.svg',
-      badge: '/static/icons/ml.svg',
-      vibrate: [200, 100, 200, 100, 200],
-      tag: 'ml-arroto',
-      renotify: false,
-    });
-  } catch {
-    try {
-      new Notification('Maria Luiza 💖', { body: 'Hora de arrotar! Os 15 minutos terminaram. 🎉' });
-    } catch {}
+function _swMsg(data) {
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage(data);
   }
 }
 
@@ -463,6 +477,35 @@ async function _pedirPermissaoNotificacao() {
   if ('Notification' in window && Notification.permission === 'default') {
     try { await Notification.requestPermission(); } catch {}
   }
+}
+
+// ===================================================================
+// INSTALAÇÃO PWA
+// ===================================================================
+let _installPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+  document.getElementById('card-instalar')?.classList.remove('hidden');
+});
+
+window.addEventListener('appinstalled', () => {
+  _installPrompt = null;
+  document.getElementById('card-instalar')?.classList.add('hidden');
+  toast('App instalado! Acesse pela tela inicial 💖');
+});
+
+async function instalarApp() {
+  if (!_installPrompt) {
+    toast('Menu do Chrome → "Adicionar à tela inicial"', 'error');
+    return;
+  }
+  _installPrompt.prompt();
+  const { outcome } = await _installPrompt.userChoice;
+  if (outcome === 'accepted') toast('Instalando... 💖');
+  _installPrompt = null;
+  document.getElementById('card-instalar')?.classList.add('hidden');
 }
 
 // ===================================================================
@@ -988,6 +1031,8 @@ document.addEventListener('visibilitychange', () => {
     State.timerEndTs = null;
     _esconderTimers();
     toast('Tempo de arrotar concluído! 🎉');
+    _swMsg({ type: 'ML_TIMER_CANCEL' });
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
   } else {
     _renderTimerDisplay(remaining);
   }
