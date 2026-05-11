@@ -682,3 +682,136 @@ body {
 .card, .mamada-card, .tl-item, .dash-mini { max-width: 100%; overflow: hidden; }
 .card-name { max-width: 100%; }
 .card-actions { flex-shrink: 0; }
+
+/* ===== FLOATING TIMER GLOBAL ===== */
+.floating-timer {
+  position: fixed;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px);
+  left: 16px;
+  right: 16px;
+  background: linear-gradient(135deg, #ff6eb4, var(--pink));
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  z-index: 150;
+  box-shadow: 0 8px 28px rgba(255,77,166,.45);
+  display: none;
+  color: var(--white);
+  align-items: center;
+  gap: 12px;
+}
+.floating-timer.visible {
+  display: flex;
+  animation: slideUp .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ft-icon { font-size: 1.6rem; flex-shrink: 0; line-height: 1; }
+.ft-text  { flex: 1; min-width: 0; }
+.ft-label { font-size: .7rem; opacity: .88; font-weight: 500; margin-bottom: 5px; }
+.ft-bar-wrap {
+  height: 4px;
+  background: rgba(255,255,255,.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.ft-bar-fill {
+  height: 100%;
+  background: var(--white);
+  border-radius: 4px;
+  transition: width .5s linear;
+}
+.ft-time {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  flex-shrink: 0;
+}
+.ft-close {
+  background: rgba(255,255,255,.22);
+  border: none;
+  border-radius: 8px;
+  color: var(--white);
+  font-size: .85rem;
+  font-weight: 700;
+  width: 28px; height: 28px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.ft-close:active { background: rgba(255,255,255,.35); }
+
+/* Quando o timer flutuante está ativo: empurra FAB para cima e adiciona padding */
+body.timer-active {
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px + 72px) !important;
+}
+body.timer-active .fab {
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px + 72px + 10px);
+}
+
+/* ===== CONSULTAS — CARDS MODERNOS ===== */
+.consulta-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition: transform .15s, box-shadow .15s;
+}
+.consulta-card:active { transform: scale(.99); }
+.consulta-card.passada { opacity: .65; }
+
+.con-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.con-icon {
+  width: 46px; height: 46px;
+  background: var(--blue-soft);
+  border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+.con-info { flex: 1; min-width: 0; }
+.con-nome {
+  font-size: .98rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.con-badge { font-size: .68rem; }
+
+.con-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.con-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .78rem;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.con-footer {
+  display: flex;
+  align-items: center;
+}
+.con-rel {
+  font-size: .8rem;
+  font-weight: 600;
+}

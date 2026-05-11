@@ -10,12 +10,13 @@ try {
   // Sem notificações não é erro fatal
 }
 
-const CACHE = 'ml-v3';
+const CACHE = 'ml-v4';
 const STATIC_ASSETS = [
   '/',
   '/static/style.css',
   '/static/script.js',
   '/static/manifest.json',
+  '/static/icons/ml.svg',
 ];
 
 // ===== INSTALL =====

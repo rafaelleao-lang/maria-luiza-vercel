@@ -9,11 +9,13 @@ const TZ = 'America/Sao_Paulo';
 const State = {
   screen: 'dashboard',
   timer: null,
-  timerSeconds: 0,
-  timerMax: 15 * 60,
+  timerEndTs: null,
   crescimentoChart: null,
   crescimentoMode: 'peso',
 };
+
+const TIMER_DURATION_MS = 15 * 60 * 1000;
+const TIMER_LS_KEY = 'ml_timer_end';
 
 // ===================================================================
 // TIMEZONE — FUNÇÕES CENTRAIS
@@ -163,6 +165,13 @@ function navigate(screen) {
   if (fab) fab.style.display = noFab.includes(screen) ? 'none' : 'flex';
   // Scroll topo ao trocar tela
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Sincroniza floating timer: esconde na tela de mamadas (tem timer inline), mostra no resto
+  if (State.timerEndTs) {
+    const ft = document.getElementById('floating-timer');
+    const onMamadas = screen === 'mamadas';
+    if (ft) ft.classList.toggle('visible', !onMamadas);
+    document.body.classList.toggle('timer-active', !onMamadas);
+  }
   loadScreen(screen);
 }
 
@@ -346,36 +355,114 @@ async function delMamada(id) {
   toast('Removido!');
 }
 
-// Timer Arroto
-function iniciarTimerArroto() {
-  if (State.timer) clearInterval(State.timer);
-  State.timerSeconds = State.timerMax;
-  const wrap = document.getElementById('timer-wrap');
-  wrap.classList.add('visible');
-  atualizarTimer();
-  State.timer = setInterval(() => {
-    State.timerSeconds--;
-    atualizarTimer();
-    if (State.timerSeconds <= 0) {
-      clearInterval(State.timer); State.timer = null;
-      wrap.classList.remove('visible');
-      toast('Tempo de arrotar concluído! 🎉');
-    }
-  }, 1000);
+// ===================================================================
+// TIMER ARROTO — baseado em timestamp real (funciona em background)
+// ===================================================================
+async function iniciarTimerArroto() {
+  await _pedirPermissaoNotificacao();
+  const endTs = Date.now() + TIMER_DURATION_MS;
+  localStorage.setItem(TIMER_LS_KEY, String(endTs));
+  State.timerEndTs = endTs;
+  _mostrarTimers();
+  _startTimerInterval();
 }
 
-function atualizarTimer() {
-  const m = Math.floor(State.timerSeconds / 60);
-  const s = State.timerSeconds % 60;
-  document.getElementById('timer-display').textContent =
-    `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  document.getElementById('timer-fill').style.width =
-    (State.timerSeconds / State.timerMax * 100) + '%';
+function _startTimerInterval() {
+  if (State.timer) clearInterval(State.timer);
+  State.timer = setInterval(_tickTimer, 500);
+}
+
+function _tickTimer() {
+  if (!State.timerEndTs) return;
+  const remaining = State.timerEndTs - Date.now();
+  if (remaining <= 0) {
+    clearInterval(State.timer);
+    State.timer = null;
+    localStorage.removeItem(TIMER_LS_KEY);
+    State.timerEndTs = null;
+    _esconderTimers();
+    toast('Tempo de arrotar concluído! 🎉');
+    _notificarArroto();
+    return;
+  }
+  _renderTimerDisplay(remaining);
+}
+
+function _renderTimerDisplay(remaining) {
+  const m   = Math.floor(remaining / 60000);
+  const s   = Math.floor((remaining % 60000) / 1000);
+  const str = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const pct = (remaining / TIMER_DURATION_MS * 100) + '%';
+
+  const td = document.getElementById('timer-display');
+  const tf = document.getElementById('timer-fill');
+  if (td) td.textContent = str;
+  if (tf) tf.style.width = pct;
+
+  const ft = document.getElementById('ft-time');
+  const fb = document.getElementById('ft-bar-fill');
+  if (ft) ft.textContent = str;
+  if (fb) fb.style.width = pct;
+}
+
+function _mostrarTimers() {
+  document.getElementById('timer-wrap')?.classList.add('visible');
+  if (State.screen !== 'mamadas') {
+    document.getElementById('floating-timer')?.classList.add('visible');
+    document.body.classList.add('timer-active');
+  }
+}
+
+function _esconderTimers() {
+  document.getElementById('timer-wrap')?.classList.remove('visible');
+  document.getElementById('floating-timer')?.classList.remove('visible');
+  document.body.classList.remove('timer-active');
 }
 
 function stopTimer() {
   if (State.timer) { clearInterval(State.timer); State.timer = null; }
-  document.getElementById('timer-wrap').classList.remove('visible');
+  localStorage.removeItem(TIMER_LS_KEY);
+  State.timerEndTs = null;
+  _esconderTimers();
+}
+
+function restaurarTimer() {
+  const saved = localStorage.getItem(TIMER_LS_KEY);
+  if (!saved) return;
+  const endTs = Number(saved);
+  if (isNaN(endTs) || Date.now() >= endTs) {
+    localStorage.removeItem(TIMER_LS_KEY);
+    return;
+  }
+  State.timerEndTs = endTs;
+  _renderTimerDisplay(endTs - Date.now());
+  _mostrarTimers();
+  _startTimerInterval();
+}
+
+async function _notificarArroto() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    reg.showNotification('Maria Luiza 💖', {
+      body: 'Hora de arrotar! Os 15 minutos terminaram. 🎉',
+      icon: '/static/icons/ml.svg',
+      badge: '/static/icons/ml.svg',
+      vibrate: [200, 100, 200, 100, 200],
+      tag: 'ml-arroto',
+      renotify: false,
+    });
+  } catch {
+    try {
+      new Notification('Maria Luiza 💖', { body: 'Hora de arrotar! Os 15 minutos terminaram. 🎉' });
+    } catch {}
+  }
+}
+
+async function _pedirPermissaoNotificacao() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    try { await Notification.requestPermission(); } catch {}
+  }
 }
 
 // ===================================================================
@@ -446,19 +533,24 @@ async function loadConsultas() {
   list.innerHTML = r.data.map(c => {
     const passada = new Date(c.horario) < Date.now();
     return `
-    <div class="card${passada ? ' opacity-60' : ''}" id="con-${c.id}">
-      <div class="card-row">
-        <div class="card-info">
-          <div class="card-name">🏥 ${esc(c.nome)}</div>
-          <div class="card-sub">${fmt(c.horario)}${c.local ? ' · ' + esc(c.local) : ''}</div>
-          <div class="mt-8 flex-center gap-8" style="justify-content:flex-start">
-            <span class="badge badge-${modalidadeBadge(c.modalidade)}">${esc(c.modalidade||'Consulta')}</span>
-            ${passada
-              ? '<span class="badge badge-gray">Concluída</span>'
-              : `<span class="text-pink fs-sm">${relTime(c.horario)}</span>`}
-          </div>
+    <div class="consulta-card${passada ? ' passada' : ''}" id="con-${c.id}">
+      <div class="con-header">
+        <div class="con-icon">🏥</div>
+        <div class="con-info">
+          <div class="con-nome">${esc(c.nome)}</div>
+          <span class="badge badge-${modalidadeBadge(c.modalidade)} con-badge">${esc(c.modalidade||'Consulta')}</span>
         </div>
         <button class="btn btn-sm btn-danger btn-icon" onclick="delConsulta('${c.id}')">🗑</button>
+      </div>
+      <div class="con-details">
+        <span class="con-chip">📆 ${fmtDate(c.horario)}</span>
+        <span class="con-chip">🕐 ${fmtTime(c.horario)}</span>
+        ${c.local ? `<span class="con-chip">📍 ${esc(c.local)}</span>` : ''}
+      </div>
+      <div class="con-footer">
+        ${passada
+          ? '<span class="badge badge-gray">Concluída</span>'
+          : `<span class="con-rel text-pink">⏳ ${relTime(c.horario)}</span>`}
       </div>
     </div>`;
   }).join('');
@@ -467,11 +559,13 @@ async function loadConsultas() {
 const modalidadeBadge = m => ({ Pediatra:'pink', Fisioterapeuta:'green', Gastro:'orange', Neurologista:'purple', Cardiologista:'blue' })[m] || 'gray';
 
 async function saveConsulta() {
-  const nome      = document.getElementById('con-nome').value.trim();
-  const localVal  = document.getElementById('con-horario').value;
-  const local     = document.getElementById('con-local').value.trim();
+  const nome       = document.getElementById('con-nome').value.trim();
+  const data       = document.getElementById('con-data').value;
+  const hora       = document.getElementById('con-hora').value;
+  const local      = document.getElementById('con-local').value.trim();
   const modalidade = document.getElementById('con-modalidade').value;
-  if (!nome || !localVal) return toast('Preencha os campos obrigatórios', 'error');
+  if (!nome || !data || !hora) return toast('Preencha nome, data e horário', 'error');
+  const localVal = `${data}T${hora}`;
   const r = await POST('/consultas', { nome, horario: toBRIso(localVal), local, modalidade });
   if (r.status !== 'ok') return toast(r.msg, 'error');
   toast(r.msg);
@@ -877,6 +971,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // SW
   registrarSW();
 
+  // Restaura timer se estava rodando antes (usa timestamp real)
+  restaurarTimer();
+
   // Tela inicial
   navigate('dashboard');
+});
+
+// Quando a página volta ao foco: recalcula o timer com o timestamp real
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible' || !State.timerEndTs) return;
+  const remaining = State.timerEndTs - Date.now();
+  if (remaining <= 0) {
+    if (State.timer) { clearInterval(State.timer); State.timer = null; }
+    localStorage.removeItem(TIMER_LS_KEY);
+    State.timerEndTs = null;
+    _esconderTimers();
+    toast('Tempo de arrotar concluído! 🎉');
+  } else {
+    _renderTimerDisplay(remaining);
+  }
 });

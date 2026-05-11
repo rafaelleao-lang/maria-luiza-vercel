@@ -11,8 +11,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="description" content="Acompanhamento diário da bebê Maria Luiza">
 <link rel="manifest" href="/manifest.json">
-<!-- Ícone para iPhone (Apple Touch Icon) -->
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4140/4140048.png">
+<!-- Ícones PWA locais (ML) -->
+<link rel="apple-touch-icon" href="/static/icons/ml.svg">
+<link rel="icon" href="/static/icons/ml.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -253,6 +254,17 @@
 
 </div><!-- /app -->
 
+<!-- FLOATING TIMER (visível em todas as telas quando timer ativo) -->
+<div class="floating-timer" id="floating-timer">
+  <span class="ft-icon">⏱</span>
+  <div class="ft-text">
+    <div class="ft-label">Hora de arrotar!</div>
+    <div class="ft-bar-wrap"><div class="ft-bar-fill" id="ft-bar-fill" style="width:100%"></div></div>
+  </div>
+  <div class="ft-time" id="ft-time">15:00</div>
+  <button class="ft-close" onclick="stopTimer()" title="Parar timer">✕</button>
+</div>
+
 <!-- FAB -->
 <button class="fab" id="fab" onclick="openFab()" style="display:none">＋</button>
 
@@ -336,9 +348,15 @@
       <label class="form-label">Nome / descrição</label>
       <input type="text" class="form-input" id="con-nome" placeholder="Ex: Retorno pediatra">
     </div>
-    <div class="form-group">
-      <label class="form-label">Data e horário</label>
-      <input type="datetime-local" class="form-input" id="con-horario">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Data</label>
+        <input type="date" class="form-input" id="con-data">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Horário</label>
+        <input type="time" class="form-input" id="con-hora">
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group">
