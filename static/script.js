@@ -251,8 +251,8 @@ async function loadDashboard() {
   const d = r.data;
 
   document.getElementById('stat-mamadas').textContent  = d.mamadas_hoje ?? 0;
-  document.getElementById('stat-remedios').textContent  = d.remedios.length;
-  document.getElementById('stat-consultas').textContent = d.consultas.length;
+  document.getElementById('stat-remedios').textContent  = d.remedios_total ?? d.remedios.length;
+  document.getElementById('stat-consultas').textContent = d.consultas_total ?? d.consultas.length;
 
   // Última mamada
   const mamWrap = document.getElementById('dash-ultima-mamada');
@@ -552,7 +552,8 @@ async function saveRemedio() {
 async function tomarRemedio(id) {
   const r = await POST('/remedios/' + id + '/tomar');
   if (r.status !== 'ok') return toast(r.msg, 'error');
-  toast('Dose registrada! ✓');
+  const proximo = r.data?.proximo ? ' Próxima: ' + fmtTime(r.data.proximo) : '';
+  toast('Dose registrada! ✓' + proximo);
   loadRemedios();
 }
 
@@ -599,7 +600,7 @@ async function loadConsultas() {
   }).join('');
 }
 
-const modalidadeBadge = m => ({ Pediatra:'pink', Fisioterapeuta:'green', Gastro:'orange', Neurologista:'purple', Cardiologista:'blue' })[m] || 'gray';
+const modalidadeBadge = m => ({ Pediatra:'pink', Fisioterapeuta:'green', Gastro:'orange', Neurologista:'purple', Cardiologista:'blue', Nutricionista:'green', Oftalmologista:'blue' })[m] || 'gray';
 
 async function saveConsulta() {
   const nome       = document.getElementById('con-nome').value.trim();
@@ -881,7 +882,10 @@ async function loadLembretes() {
   const list = document.getElementById('lembretes-list');
   list.innerHTML = loader();
   const r = await GET('/lembretes');
-  if (r.status !== 'ok' || !r.data.length) {
+  if (r.status !== 'ok') {
+    list.innerHTML = `<div class="text-muted fs-sm" style="padding:16px">Erro ao carregar lembretes. Verifique a conexão.</div>`; return;
+  }
+  if (!r.data.length) {
     list.innerHTML = empty('📌', 'Nenhum lembrete salvo'); return;
   }
   list.innerHTML = r.data.map(l => `
@@ -907,7 +911,8 @@ async function saveLembrete() {
 
 async function delLembrete(id) {
   if (!confirm('Remover este lembrete?')) return;
-  await DEL('/lembretes/' + id);
+  const r = await DEL('/lembretes/' + id);
+  if (r.status !== 'ok') return toast(r.msg || 'Erro ao remover', 'error');
   document.getElementById('lem-' + id)?.remove();
   toast('Removido!');
 }

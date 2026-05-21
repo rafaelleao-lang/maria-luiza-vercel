@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from datetime import datetime, timedelta, timezone
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 
 try:
@@ -90,35 +91,68 @@ def dashboard():
         start_utc, end_utc = today_br_utc_range()
         agora_utc = now_utc().isoformat()
 
-        mamadas_hoje = supabase.table("mamadas").select("*", count="exact") \
-            .gte("horario", start_utc).lte("horario", end_utc).execute()
+        def q_mamadas_hoje():
+            return supabase.table("mamadas").select("*", count="exact") \
+                .gte("horario", start_utc).lte("horario", end_utc).execute()
 
-        remedios = supabase.table("remedios").select("*") \
-            .order("proximo_horario", desc=False).limit(5).execute()
+        def q_ultima_mamada():
+            return supabase.table("mamadas").select("*") \
+                .order("horario", desc=True).limit(1).execute()
 
-        consultas = supabase.table("consultas").select("*") \
-            .gte("horario", agora_utc).order("horario", desc=False).limit(3).execute()
+        def q_remedios():
+            return supabase.table("remedios").select("*") \
+                .order("proximo_horario", desc=False).limit(5).execute()
 
-        exames = supabase.table("exames").select("*") \
-            .gte("horario", agora_utc).order("horario", desc=False).limit(3).execute()
+        def q_remedios_total():
+            return supabase.table("remedios").select("id", count="exact").execute()
 
-        vacinas = supabase.table("vacinas").select("*") \
-            .eq("aplicada", False).order("data_prevista", desc=False).limit(3).execute()
+        def q_consultas():
+            return supabase.table("consultas").select("*") \
+                .gte("horario", agora_utc).order("horario", desc=False).limit(3).execute()
 
-        lembretes = supabase.table("lembretes").select("*") \
-            .order("created_at", desc=False).limit(5).execute()
+        def q_consultas_total():
+            return supabase.table("consultas").select("id", count="exact").execute()
 
-        ultima_mamada = supabase.table("mamadas").select("*") \
-            .order("horario", desc=True).limit(1).execute()
+        def q_exames():
+            return supabase.table("exames").select("*") \
+                .gte("horario", agora_utc).order("horario", desc=False).limit(3).execute()
+
+        def q_vacinas():
+            return supabase.table("vacinas").select("*") \
+                .eq("aplicada", False).order("data_prevista", desc=False).limit(3).execute()
+
+        def q_lembretes():
+            return supabase.table("lembretes").select("*") \
+                .order("created_at", desc=False).limit(5).execute()
+
+        tasks = {
+            'mamadas_hoje': q_mamadas_hoje,
+            'ultima_mamada': q_ultima_mamada,
+            'remedios': q_remedios,
+            'remedios_total': q_remedios_total,
+            'consultas': q_consultas,
+            'consultas_total': q_consultas_total,
+            'exames': q_exames,
+            'vacinas': q_vacinas,
+            'lembretes': q_lembretes,
+        }
+
+        res = {}
+        with ThreadPoolExecutor(max_workers=len(tasks)) as ex:
+            futures = {ex.submit(fn): key for key, fn in tasks.items()}
+            for future in as_completed(futures):
+                res[futures[future]] = future.result()
 
         return ok({
-            "mamadas_hoje": mamadas_hoje.count or 0,
-            "ultima_mamada": ultima_mamada.data[0] if ultima_mamada.data else None,
-            "remedios": remedios.data or [],
-            "consultas": consultas.data or [],
-            "exames": exames.data or [],
-            "vacinas": vacinas.data or [],
-            "lembretes": lembretes.data or []
+            "mamadas_hoje": res['mamadas_hoje'].count or 0,
+            "ultima_mamada": res['ultima_mamada'].data[0] if res['ultima_mamada'].data else None,
+            "remedios": res['remedios'].data or [],
+            "remedios_total": res['remedios_total'].count or 0,
+            "consultas": res['consultas'].data or [],
+            "consultas_total": res['consultas_total'].count or 0,
+            "exames": res['exames'].data or [],
+            "vacinas": res['vacinas'].data or [],
+            "lembretes": res['lembretes'].data or []
         })
     except Exception as e:
         return err(str(e), 500)
@@ -197,10 +231,9 @@ def tomar_remedio(id):
         if not r.data:
             return err("Não encontrado", 404)
         rem = r.data[0]
-        atual = parse_dt(rem["proximo_horario"])
-        if not atual:
-            return err("Horário inválido no registro")
-        proximo = atual + timedelta(hours=int(rem["intervalo_horas"]))
+        if not rem.get("intervalo_horas"):
+            return err("Intervalo não configurado")
+        proximo = now_utc() + timedelta(hours=int(rem["intervalo_horas"]))
         supabase.table("remedios").update({
             "proximo_horario": proximo.isoformat(),
             "ultima_dose": now_utc().isoformat()
